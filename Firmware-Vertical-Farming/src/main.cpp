@@ -5,9 +5,9 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_Sensor.h>
 
-
 #include "displayMsgHelper.h"
 #include "gasSensorHelper.h"
+#include "dhtSensorHelper.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -19,51 +19,34 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 DHT dht(DHTPIN, DHTTYPE);
 
-void setup() {
-
-  Serial.begin(9600);
-  Wire.begin(21, 22); // SDA=21, SCL=22
-  dht.begin();
-  pinMode(MQ2_PIN, INPUT);
-
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println("SSD1306 allocation failed");
-    for (;;);
-  }
-
-  loadIntrMsg(display);
-  delay(2000);
-  
-  
-}
-
-void loop() {   
+void msgOrder1()
+{
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.println("Farming");
   display.display();
-  
-  bool state=detectedHydoCarbonPresence(MQ2_PIN);
-  Serial.println(state);
-  if(state==true)
-  {
-    display.setCursor(0, 25);
-    display.setTextSize(1);
-    display.println("Hydrocarbon: Absent");
-    display.display();
-  }
-  else
-  {
+}
+
+void hydrocarbon_present(Adafruit_SSD1306 display)
+{
     display.setCursor(0, 25);
     display.setTextSize(1);
     display.println("Hydrocarbon: Present");
     display.display();
-  }
-  float humidity = dht.readHumidity();
-  float temperature = dht.readTemperature();
+}
 
+void hydrocarbon_absent(Adafruit_SSD1306 display)
+{
+    display.setCursor(0, 25);
+    display.setTextSize(1);
+    display.println("Hydrocarbon: Absent");
+    display.display();
+}
+
+void display_temp_humidity(Adafruit_SSD1306 display, float temperature, float humidity)
+{
   display.setCursor(0, 35);
   display.setTextSize(1);
   display.println("Temperature:");
@@ -90,6 +73,40 @@ void loop() {
   display.setCursor(100, 45);
   display.print("%");
   display.display();
+}
 
+void setup() {
+
+  Serial.begin(9600);
+  Wire.begin(21, 22); // SDA=21, SCL=22
+  dht.begin();
+  pinMode(MQ2_PIN, INPUT);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("SSD1306 allocation failed");
+    for (;;);
+  }
+
+  loadIntrMsg(display);
+  delay(2000);
+}
+
+void loop() {   
+
+  float humidity = getCurrentTemp(dht);
+  float temperature = getCurrentHumidity(dht);  
+  bool state=detectedHydoCarbonPresence(MQ2_PIN);
+  
+  msgOrder1();  
+  
+  if(state==true)
+  {
+    hydrocarbon_absent(display);
+  }
+  else
+  {
+    hydrocarbon_present(display);
+  }
+  display_temp_humidity(display,temperature,humidity);
   delay(5000);
 }
