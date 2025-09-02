@@ -1,30 +1,25 @@
 #include <Wire.h>
-#include <WiFi.h>
-#include <Arduino.h>
+#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
-#include "displayDriver.h"
+#include "displayMsgHelper.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
-#define OLED_ADDRESS 0x3C
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+#define OLED_RESET -1
 
-void setup()
-{
-  Serial.begin(9600);
-  checkDisplay(display);
-  display.clearDisplay(); 
-  showMsg(display,"V-Farming",0,0,1);
-  showMsg(display,"built in AI & DNT LAB",1,0,1);  
-  showMsg(display,"DPS-Indirapuram",2,0,1);
-  delay(3000);
-  Serial.println("Vertical Farming");
-  Serial.println("Built in AI & DNT LAB");
-  Serial.println("DPS-Indirapuram");
-}
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-void loop()
-{
+void setup() {
+  Wire.begin(21, 22); // SDA=21, SCL=22 (adjust for your board)
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("SSD1306 allocation failed");
+    for (;;); // stop here
+  }
+  
+  loadIntrMsg(display);
+
   
 }
+
+void loop() {}
